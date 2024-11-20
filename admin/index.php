@@ -2,29 +2,25 @@
 <?php
     session_start();
     include('vendor/inc/config.php');//get configuration file
-    if(isset($_POST['admin_login']))
-    {
-      $a_email=$_POST['a_email'];
-      $a_pwd=($_POST['a_pwd']);//
-      $stmt=$mysqli->prepare("SELECT a_email, a_pwd, a_id FROM tms_admin WHERE a_email=? and a_pwd=? ");//sql to log in user
-      $stmt->bind_param('ss',$a_email,$a_pwd);//bind fetched parameters
-      $stmt->execute();//execute bind
-      $stmt -> bind_result($a_email,$a_pwd,$a_id);//bind result
-      $rs=$stmt->fetch();
-      $_SESSION['a_id']=$a_id;//assaign session to admin id
-      //$uip=$_SERVER['REMOTE_ADDR'];
-      //$ldate=date('d/m/Y h:i:s', time());
-      if($rs)
-      {//if its sucessfull
+    if(isset($_POST['admin_login'])) {
+      $a_email = $_POST['a_email'];
+      $a_pwd = $_POST['a_pwd'];
+      $hashed_pwd = password_hash($a_pwd, PASSWORD_DEFAULT);
+      $stmt = $mysqli->prepare("SELECT a_email, a_id FROM tms_admin WHERE a_email=?");
+      $stmt->bind_param('s', $a_email);
+      $stmt->execute();
+      $stmt -> bind_result($a_email, $a_id);
+      $rs = $stmt->fetch();
+      if($rs) {
+        $stmt = $mysqli->prepare("UPDATE tms_admin SET a_pwd=? WHERE a_email=?");
+        $stmt->bind_param('ss', $hashed_pwd, $a_email);
+        $stmt->execute();
+        $_SESSION['a_id'] = $a_id;
         header("location:admin-dashboard.php");
+      } else {
+        $error = "Access Denied Please Check Your Credentials";
       }
-
-      else
-      {
-      #echo "<script>alert('Access Denied Please Check Your Credentials');</script>";
-      $error = "Access Denied Please Check Your Credentials";
-      }
-  }
+    }
 ?>
 <!--End Server side-->
 <!DOCTYPE html>
